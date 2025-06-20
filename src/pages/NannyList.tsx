@@ -6,10 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDown, ArrowUp, Phone, Star, User, Filter } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import { ArrowDown, ArrowUp, Phone, Star, User, Filter, MapPin, Languages, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Navigation from "@/components/Navigation";
 
-// Mock data - replace with actual API call
+// Enhanced mock data with languages and coordinates
 const mockNannies = [
   {
     id: "N001",
@@ -22,7 +27,10 @@ const mockNannies = [
     rating: 4.5,
     tags: ["Infant Care", "Night Shift"],
     roleType: "Full-time",
-    verificationScore: 85
+    verificationScore: 85,
+    languages: ["Hindi", "English", "Kannada"],
+    coordinates: { lat: 12.9352, lng: 77.6245 }, // Koramangala coords
+    distance: 2.3
   },
   {
     id: "N002", 
@@ -35,7 +43,10 @@ const mockNannies = [
     rating: 4.8,
     tags: ["Toddler Care", "Cooking"],
     roleType: "Part-time",
-    verificationScore: 92
+    verificationScore: 92,
+    languages: ["Hindi", "English", "Bengali", "Telugu"],
+    coordinates: { lat: 12.9698, lng: 77.7499 }, // Whitefield coords
+    distance: 8.7
   },
   {
     id: "N003",
@@ -48,9 +59,30 @@ const mockNannies = [
     rating: 4.2,
     tags: ["Housekeeping", "Flexible Hours"],
     roleType: "Full-time",
-    verificationScore: 78
+    verificationScore: 78,
+    languages: ["Telugu", "English", "Tamil"],
+    coordinates: { lat: 12.9116, lng: 77.6473 }, // HSR Layout coords
+    distance: 4.1
+  },
+  {
+    id: "N004",
+    fullName: "Lakshmi Nair",
+    area: "Indiranagar",
+    experience: 6,
+    availability: "Available",
+    photo: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+    phone: "+91 9876543213",
+    rating: 4.6,
+    tags: ["Night Care", "Special Needs"],
+    roleType: "Live-in",
+    verificationScore: 88,
+    languages: ["Malayalam", "English", "Hindi", "Kannada", "Tamil"],
+    coordinates: { lat: 12.9716, lng: 77.6412 }, // Indiranagar coords
+    distance: 1.8
   }
 ];
+
+const allLanguages = Array.from(new Set(mockNannies.flatMap(nanny => nanny.languages))).sort();
 
 const NannyList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +91,17 @@ const NannyList = () => {
   const [filterRole, setFilterRole] = useState("all");
   const [filterAvailability, setFilterAvailability] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [maxDistance, setMaxDistance] = useState([20]); // Default 20km
+  const [languageFilterOpen, setLanguageFilterOpen] = useState(false);
+
+  const toggleLanguage = (language: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(language) 
+        ? prev.filter(l => l !== language)
+        : [...prev, language]
+    );
+  };
 
   const filteredNannies = mockNannies
     .filter(nanny => {
@@ -67,7 +110,11 @@ const NannyList = () => {
                            nanny.id.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = filterRole === "all" || nanny.roleType === filterRole;
       const matchesAvailability = filterAvailability === "all" || nanny.availability === filterAvailability;
-      return matchesSearch && matchesRole && matchesAvailability;
+      const matchesLanguages = selectedLanguages.length === 0 || 
+                              selectedLanguages.every(lang => nanny.languages.includes(lang));
+      const matchesDistance = nanny.distance <= maxDistance[0];
+      
+      return matchesSearch && matchesRole && matchesAvailability && matchesLanguages && matchesDistance;
     })
     .sort((a, b) => {
       let aValue, bValue;
@@ -79,6 +126,10 @@ const NannyList = () => {
         case "rating":
           aValue = a.rating;
           bValue = b.rating;
+          break;
+        case "distance":
+          aValue = a.distance;
+          bValue = b.distance;
           break;
         default:
           aValue = a.fullName;
@@ -92,13 +143,25 @@ const NannyList = () => {
       }
     });
 
-  const toggleSort = (field: string) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortOrder("asc");
-    }
+  const renderLanguageBadges = (languages: string[]) => {
+    const displayLanguages = languages.slice(0, 3);
+    const remainingCount = languages.length - 3;
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {displayLanguages.map((language) => (
+          <Badge key={language} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+            <Languages className="w-3 h-3 mr-1" />
+            {language}
+          </Badge>
+        ))}
+        {remainingCount > 0 && (
+          <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-200">
+            +{remainingCount} more
+          </Badge>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -133,7 +196,7 @@ const NannyList = () => {
           </div>
 
           {showFilters && (
-            <div className="grid md:grid-cols-3 gap-4 p-4 bg-white rounded-lg border">
+            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-white rounded-lg border">
               <Select value={filterRole} onValueChange={setFilterRole}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by Role" />
@@ -158,6 +221,67 @@ const NannyList = () => {
                 </SelectContent>
               </Select>
 
+              {/* Language Filter */}
+              <Popover open={languageFilterOpen} onOpenChange={setLanguageFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={languageFilterOpen}
+                    className="justify-between"
+                  >
+                    {selectedLanguages.length > 0
+                      ? `${selectedLanguages.length} selected`
+                      : "Languages"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search languages..." />
+                    <CommandEmpty>No language found.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandList>
+                        {allLanguages.map((language) => (
+                          <CommandItem
+                            key={language}
+                            value={language}
+                            onSelect={() => toggleLanguage(language)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={selectedLanguages.includes(language)}
+                                onChange={() => toggleLanguage(language)}
+                              />
+                              <span>{language}</span>
+                            </div>
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                selectedLanguages.includes(language) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandList>
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              {/* Distance Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Distance: {maxDistance[0]}km</label>
+                <Slider
+                  value={maxDistance}
+                  onValueChange={setMaxDistance}
+                  max={20}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+
               <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
                 const [field, order] = value.split('-');
                 setSortBy(field);
@@ -172,11 +296,41 @@ const NannyList = () => {
                   <SelectItem value="experience-desc">Experience (High-Low)</SelectItem>
                   <SelectItem value="experience-asc">Experience (Low-High)</SelectItem>
                   <SelectItem value="rating-desc">Rating (High-Low)</SelectItem>
+                  <SelectItem value="distance-asc">Distance (Nearest)</SelectItem>
+                  <SelectItem value="distance-desc">Distance (Farthest)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           )}
         </div>
+
+        {/* Active Filters Display */}
+        {(selectedLanguages.length > 0 || maxDistance[0] < 20) && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {selectedLanguages.map((language) => (
+              <Badge key={language} variant="secondary" className="px-2 py-1">
+                {language}
+                <button
+                  onClick={() => toggleLanguage(language)}
+                  className="ml-1 text-xs hover:text-red-600"
+                >
+                  ×
+                </button>
+              </Badge>
+            ))}
+            {maxDistance[0] < 20 && (
+              <Badge variant="secondary" className="px-2 py-1">
+                Within {maxDistance[0]}km
+                <button
+                  onClick={() => setMaxDistance([20])}
+                  className="ml-1 text-xs hover:text-red-600"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Results Count */}
         <div className="mb-4">
@@ -188,9 +342,9 @@ const NannyList = () => {
         {/* Nanny Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNannies.map((nanny) => (
-            <Card key={nanny.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card key={nanny.id} className="hover:shadow-lg transition-shadow cursor-pointer h-full">
               <Link to={`/nanny/${nanny.id}`}>
-                <CardContent className="p-6">
+                <CardContent className="p-6 h-full flex flex-col">
                   <div className="flex items-start gap-4 mb-4">
                     <img
                       src={nanny.photo}
@@ -200,11 +354,14 @@ const NannyList = () => {
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg text-gray-900">{nanny.fullName}</h3>
                       <p className="text-gray-600 text-sm">ID: {nanny.id}</p>
-                      <p className="text-gray-600 text-sm">📍 {nanny.area}</p>
+                      <div className="flex items-center gap-1 text-gray-600 text-sm mt-1">
+                        <MapPin className="w-3 h-3" />
+                        <span>{nanny.area} • {nanny.distance}km away</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 mb-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Experience</span>
                       <span className="font-medium">{nanny.experience} years</span>
@@ -226,7 +383,13 @@ const NannyList = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1 mt-4">
+                  {/* Languages Section */}
+                  <div className="mb-4">
+                    <span className="text-sm text-gray-600 block mb-2">Languages</span>
+                    {renderLanguageBadges(nanny.languages)}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 mb-4">
                     {nanny.tags.map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         {tag}
@@ -234,7 +397,7 @@ const NannyList = () => {
                     ))}
                   </div>
 
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex gap-2 mt-auto">
                     <Button
                       size="sm"
                       variant="outline"
