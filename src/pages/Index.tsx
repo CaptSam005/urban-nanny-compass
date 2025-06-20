@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shield, Filter, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AddNannyModal } from "@/components/AddNannyModal";
 
 const Index = () => {
   return (
@@ -96,11 +97,7 @@ const Index = () => {
             <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
               <Link to="/nannies">View All Nannies</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
-              <a href="https://forms.google.com/nanny-application" target="_blank" rel="noopener noreferrer">
-                Add New Nanny
-              </a>
-            </Button>
+            <AddNannyModal />
           </div>
         </div>
       </div>
