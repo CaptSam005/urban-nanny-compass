@@ -1,12 +1,45 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Users, Calendar, Settings, Star, MessageCircle, FileText } from "lucide-react";
+import { Shield, Users, Calendar, Settings, Star, MessageCircle, FileText, AlertTriangle, Phone, User, Filter } from "lucide-react";
 import Navigation from "@/components/Navigation";
+
+// Mock duplicate data
+const mockDuplicates = [
+  {
+    id: "DUP001",
+    fullName: "Priya Sharma",
+    phone: "+91 9876543210",
+    source: "Google Form",
+    timestamp: "2024-01-15T10:30:00Z",
+    duplicateCount: 2,
+    originalId: "N001",
+    reasons: ["Same Phone", "Same Name"]
+  },
+  {
+    id: "DUP002",
+    fullName: "Anita Devi",
+    phone: "+91 9876543220",
+    source: "Manual Entry",
+    timestamp: "2024-01-14T15:45:00Z",
+    duplicateCount: 3,
+    originalId: "N008",
+    reasons: ["Same Phone", "Similar Name", "Same Address"]
+  },
+  {
+    id: "DUP003",
+    fullName: "Sunita K",
+    phone: "+91 9876543215",
+    source: "Google Form",
+    timestamp: "2024-01-13T09:20:00Z",
+    duplicateCount: 2,
+    originalId: "N015",
+    reasons: ["Same Phone"]
+  }
+];
 
 const AdminPanel = () => {
   const [selectedNanny, setSelectedNanny] = useState("N001");
@@ -14,6 +47,8 @@ const AdminPanel = () => {
   const [verificationScore, setVerificationScore] = useState("85");
   const [parentComments, setParentComments] = useState("");
   const [parentRating, setParentRating] = useState("4.5");
+  const [duplicateFilterSource, setDuplicateFilterSource] = useState("all");
+  const [duplicateSortBy, setDuplicateSortBy] = useState("timestamp");
 
   // Mock data for admin operations
   const recentActivities = [
@@ -28,6 +63,19 @@ const AdminPanel = () => {
     { id: 2, task: "Follow up with N012 references", priority: "Medium", dueDate: "Tomorrow" },
     { id: 3, task: "Update verification score for N008", priority: "Low", dueDate: "This week" },
   ];
+
+  const filteredDuplicates = mockDuplicates
+    .filter(duplicate => duplicateFilterSource === "all" || duplicate.source === duplicateFilterSource)
+    .sort((a, b) => {
+      switch (duplicateSortBy) {
+        case "duplicateCount":
+          return b.duplicateCount - a.duplicateCount;
+        case "name":
+          return a.fullName.localeCompare(b.fullName);
+        default:
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      }
+    });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,12 +117,129 @@ const AdminPanel = () => {
               </Card>
               <Card>
                 <CardContent className="p-6 text-center">
-                  <FileText className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-gray-900">12</div>
-                  <div className="text-sm text-gray-600">This Week</div>
+                  <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-gray-900">{mockDuplicates.length}</div>
+                  <div className="text-sm text-gray-600">Potential Duplicates</div>
                 </CardContent>
               </Card>
             </div>
+          </div>
+
+          {/* Potential Duplicates Section */}
+          <div className="lg:col-span-3 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-6 h-6 text-orange-500" />
+                  Potential Duplicates
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Duplicate Filters */}
+                <div className="flex gap-4 mb-6">
+                  <Select value={duplicateFilterSource} onValueChange={setDuplicateFilterSource}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by Source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sources</SelectItem>
+                      <SelectItem value="Google Form">Google Form</SelectItem>
+                      <SelectItem value="Manual Entry">Manual Entry</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={duplicateSortBy} onValueChange={setDuplicateSortBy}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Sort By" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="timestamp">Latest First</SelectItem>
+                      <SelectItem value="duplicateCount">Most Duplicates</SelectItem>
+                      <SelectItem value="name">Name A-Z</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Duplicate List */}
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {filteredDuplicates.map((duplicate) => (
+                    <div key={duplicate.id} className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <User className="w-4 h-4" />
+                            <span className="font-medium">{duplicate.fullName}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <span>ID: {duplicate.id}</span>
+                            <span>Original: {duplicate.originalId}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {duplicate.source}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Badge variant="destructive">
+                          {duplicate.duplicateCount} Duplicates
+                        </Badge>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Phone: </span>
+                          <span className="font-mono text-sm">{duplicate.phone}</span>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="ml-2 h-6 w-6 p-0"
+                            onClick={() => window.open(`tel:${duplicate.phone}`, '_self')}
+                          >
+                            <Phone className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Submitted: </span>
+                          <span className="text-sm">{new Date(duplicate.timestamp).toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <span className="text-sm font-medium text-gray-600">Reasons: </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {duplicate.reasons.map((reason) => (
+                            <Badge key={reason} variant="secondary" className="text-xs">
+                              {reason}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          View Original
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          Compare
+                        </Button>
+                        <Button size="sm" variant="destructive">
+                          Mark as Duplicate
+                        </Button>
+                        <Button size="sm">
+                          Keep Separate
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {filteredDuplicates.length === 0 && (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">No duplicates found</h3>
+                    <p className="text-gray-600">All entries appear to be unique based on current filters.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Admin Controls */}

@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NannyList from "./pages/NannyList";
 import NannyProfile from "./pages/NannyProfile";
-import DuplicateChecker from "./pages/DuplicateChecker";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 
@@ -23,7 +22,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/nannies" element={<NannyList />} />
           <Route path="/nanny/:id" element={<NannyProfile />} />
-          <Route path="/duplicates" element={<DuplicateChecker />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

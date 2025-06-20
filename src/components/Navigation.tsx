@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Users, AlertTriangle, Shield } from "lucide-react";
+import { Home, Users, Shield } from "lucide-react";
 
 const Navigation = () => {
   const location = useLocation();
@@ -38,16 +38,6 @@ const Navigation = () => {
               <Link to="/nannies">
                 <Users className="w-4 h-4 mr-2" />
                 Nannies
-              </Link>
-            </Button>
-            <Button
-              variant={isActive("/duplicates") ? "default" : "ghost"}
-              size="sm"
-              asChild
-            >
-              <Link to="/duplicates">
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                Duplicates
               </Link>
             </Button>
             <Button

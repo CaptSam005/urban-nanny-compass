@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Shield, Filter, UserCheck } from "lucide-react";
+import { Users, Shield, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AddNannyModal } from "@/components/AddNannyModal";
 
@@ -21,7 +21,7 @@ const Index = () => {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <Link to="/nannies">
               <CardHeader className="text-center">
@@ -29,18 +29,6 @@ const Index = () => {
                 <CardTitle className="text-lg">Nanny Database</CardTitle>
                 <CardDescription>
                   Browse and manage all registered nannies
-                </CardDescription>
-              </CardHeader>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/duplicates">
-              <CardHeader className="text-center">
-                <Filter className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                <CardTitle className="text-lg">Duplicate Checker</CardTitle>
-                <CardDescription>
-                  Review and manage duplicate entries
                 </CardDescription>
               </CardHeader>
             </Link>
